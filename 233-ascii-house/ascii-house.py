@@ -82,20 +82,18 @@ def add_roofs(house):
         roofs += [[edges[index], edges[index + 1]] for index in range(0, len(edges), 2)]
     while roofs:
         roofs = filter(lambda roof: roof[0] < roof[1], roofs)
-        roofed_house.append(make_roofs(BP_BLANK_LINE, roofs))
-        print roofs
+        roofed_house.append(make_roofs(BP_BLANK_LINE * 5, roofs))
     return roofed_house
 
 
 def house_from_blueprint(blueprint):
     house = []
     prev_line = BP_BLANK_LINE
-    clean_bp = [BP_BLANK_LINE]
-    clean_bp.extend([line.ljust(len(blueprint[-1])) for line in blueprint])
-    for line in clean_bp[::-1]:
+    for line in [line.ljust(len(blueprint[-1])) for line in blueprint][::-1]:
         house.append(make_ceiling(zip(line, prev_line), BP_AIR_PAIR))
         house.append(make_walls(line, BP_AIR))
         prev_line = line
+    house.append(make_ceiling(zip(BP_BLANK_LINE, prev_line), BP_AIR_PAIR))
     house[1] = add_door(house[1], len(blueprint[-1]))
     house = add_roofs(house)
     return house[::-1]
