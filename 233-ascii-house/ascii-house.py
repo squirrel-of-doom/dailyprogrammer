@@ -82,7 +82,7 @@ def add_roofs(house):
         roofs += [[edges[index], edges[index + 1]] for index in range(0, len(edges), 2)]
     while roofs:
         roofs = filter(lambda roof: roof[0] < roof[1], roofs)
-        roofed_house.append(make_roofs(BP_BLANK_LINE * 5, roofs))
+        roofed_house.append(make_roofs(BP_BLANK_LINE * 5, roofs).rstrip())
     return roofed_house
 
 
