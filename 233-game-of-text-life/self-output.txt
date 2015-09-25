@@ -1,0 +1,41 @@
+i    t s   d                                                                 
+i    t r  do                                                                 
+            'm                                                               
+D    C    = ' ''o        --         o        1,            (         (   0   
+D    =    , y))fo        -1         o        -1            x         0   )   
+ DS     [(      f        (,         o        1,            ,         0   0   
+ f   tt_iiiiiallforomiele                                                    
+ e fg                                                                        
+ e fw                              s                                         
+     ih                                     iutt]                            
+       i      =                       e  n i                                 
+        r    n[[                  f   l  e i      t                          
+         ttur   ile.l.ljtttwiddt   r   li      nuu]                          
+ d   g_n_eeggbousrboboar      )                                              
+ e fg             (            ::n(bbaar[d0]      l   ine      ae   lntt     
+ e                                          )i##   ll ine      am   engt     
+    r             y                                                    t     
+     reun  i      + d )    ra            a d (x +   )     ange(width)        
+                     y      nnnghheehg)   a        )      agne(widhh)        
+ f   genneww_stt(cccll   ieihbuuur)                                          
+ e fg                l,              bba           AEADELE,   nihgbour)s     
+ f                                  ambd           EAD_CELL   eighbours)     
+    i                                  d           EDA_EEL,   egggoors)s     
+       i                               neeigobrs)                            
+                                      _neighbours                            
+         ls                  ic(e(alee_niegbbbru)                            
+     se   s retur   EAD_CEL                                                  
+     lse:i e                 ss      2   :                                   
+     es if l           ighbours      2   ]                                   
+                        hgoorsr      [   ]                                   
+         ls             _CL                                                  
+         ee retur   EAD_CEL                                                  
+             ruur   EDAD_EL                                                  
+ d   _s_tpe(oarad)                                                           
+ e dd               wttte(eclel   e_n_iihbobus(sbarar      y                 
+ f dr                                                  x, y ) ueeatetebboad] 
+     euur                                              e in enumerate(board) 
+              f      el      uummatet(lnnne   o      nn      emeeaae(((orard 
+ r   in      __stt(pgg__niniil(lys..rrg[[11])                                
+ o pl                   initial(sys.argv[1]))                                
+ r pp                    intalalsss.rrvvv[)))                                
