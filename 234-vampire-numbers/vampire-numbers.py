@@ -28,5 +28,5 @@ start = 10 ** (fang_length - 1)
 all_fangs = filter(is_vampire, ordered_fangs(start, 10 * start, fang_num))
 vampires = [(reduce(mul, f), f) for f in all_fangs if reduce(mul, f) % 100 > 0]
 
-for v in vampires:
-    print("{} = {}".format(v[0], " * ".join(map(str, v[1]))))
+for v, f in vampires:
+    print("{} = {}".format(v, " * ".join(map(str, f))))
