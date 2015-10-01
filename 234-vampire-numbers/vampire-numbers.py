@@ -20,7 +20,7 @@ def is_vampire(fangs):
     return sorted(str(vampire)) == sorted(fang_digits)
 
 
-S_PROMPT = 'Input number length and fang length: '
+S_PROMPT = 'Input number length and fang count: '
 num_length, fang_num = tuple(map(int, input(S_PROMPT).split(maxsplit=1)))
 fang_length = num_length // fang_num
 
