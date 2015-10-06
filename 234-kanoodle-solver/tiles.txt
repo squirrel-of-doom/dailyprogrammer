@@ -1,0 +1,48 @@
+ A
+ A
+AA
+
+ B
+BB
+BB
+
+ C
+ C
+ C
+CC
+
+ D
+ D
+DD
+ D
+
+ E
+ E
+EE
+E 
+
+F 
+FF
+
+  G
+  G
+GGG
+
+  H
+ HH
+HH 
+
+I I
+III
+
+J
+J
+J
+J
+
+KK
+KK
+
+ L 
+LLL
+ L 
