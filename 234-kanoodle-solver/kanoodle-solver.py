@@ -1,23 +1,22 @@
 import timeit
 
-WIDTH = 5
-HEIGHT = 5
-
+WIDTH = 8
+HEIGHT = 8
 
 def find_solutions(tiles, free, so_far=None):
     so_far = {} if not so_far else so_far
     if not free:
-        # print('.', end='', flush=True)
         return [so_far]
     solutions = []
     spot = min(free)
+    free_shifted = {(p[0] - spot[0], p[1] - spot[1]) for p in free}
     # Find all possile placements for the next tile
-    for placed in filter(lambda x: x[1].issubset(free),
-                         [(key, {(spot[0] + p[0], spot[1] + p[1]) for p in t})
-                          for key, tile in tiles.items() if key not in so_far
-                          for t in tile]):
-        solutions += find_solutions(tiles, free - placed[1],
-                                    {**{placed[0]: placed[1]}, **so_far})
+    for letter in tiles.keys() - so_far.keys():
+        for tile in tiles[letter]:
+            if tile.issubset(free_shifted):
+                so_far[letter] = {(spot[0] + p[0], spot[1] + p[1]) for p in tile}
+                solutions += find_solutions(tiles, free - so_far[letter], so_far)
+                del so_far[letter]
     return solutions
 
 
@@ -28,7 +27,7 @@ tiles = {tile.lstrip()[0]:
          {tile, '\n'.join(tile.splitlines()[::-1]),
           '\n'.join([line[::-1] for line in tile.splitlines()]),
           '\n'.join([line[::-1] for line in tile.splitlines()[::-1]])}
-         for tile in open('smaller.txt').read().split('\n\n')}
+         for tile in open('small.txt').read().split('\n\n')}
 
 # Adding 90 degree rotated orientations
 for t in tiles.values():
@@ -44,9 +43,9 @@ numeric_tiles = {k: [{(line[0], char[0] - tile.splitlines()[0].index(k))
 board = {(l, c) for l in range(HEIGHT) for c in range(WIDTH)}
 def testme():
     solutions = find_solutions(numeric_tiles, board)
+    print(len(solutions))
 
 print(timeit.timeit(testme, number=1))
-#print(len(solutions))
 
 # for s in solutions:
 #     print('=====')
