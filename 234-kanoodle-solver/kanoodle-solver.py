@@ -1,5 +1,3 @@
-import timeit
-
 WIDTH = 5
 HEIGHT = 11
 
@@ -46,6 +44,6 @@ board = {(l, c) for l in range(HEIGHT) for c in range(WIDTH)}
 solutions = find_solutions(numeric_tiles, board)
 print(len(solutions))
 
- print('\n'.join([' '.join([k for c in range(WIDTH)
-                            for k,v in s.items() if (c, l) in v])
-                  for l in range(HEIGHT)]))
+print('\n'.join([' '.join([k for c in range(WIDTH)
+                           for k, v in solutions[0].items() if (c, l) in v])
+                 for l in range(HEIGHT)]))
