@@ -1,5 +1,6 @@
-import re
 from math import gcd
+from operator import mul
+import re
 
 
 def insert(compound, name, n=1):
@@ -8,19 +9,19 @@ def insert(compound, name, n=1):
     compound[name] += n
 
 
-def get_subs(resub, resplit, molstr, mul=1):
+def get_subs(sub_re, split_re, molstr, mul=1):
     molecule = {}
-    for match in re.finditer(resub, molstr):
+    for match in re.finditer(sub_re, molstr):
         n = int(match.group(2)) if match.group(2) else 1
         insert(molecule, match.group(1), n * mul)
-    for s in re.split(resplit, molstr):
+    for s in re.split(split_re, molstr):
         if s:
             insert(molecule, s, mul)
     return molecule
 
 
 def parse_molecule(molstr):
-    elem_re = re.compile('([A-Z][a-z]?)(\d)*')
+    elem_re = re.compile('([A-Z][a-z]?)(\d*)')
     elements = {}
     compounds = get_subs('\[([\w\(\)]+)\](\d*)', '\[[\w\(\)]+\]\d*', molstr)
     for s0, n0 in compounds.items():
@@ -40,7 +41,7 @@ def parse_side(side):
             if not element in elements:
                 elements[element] = {}
             elements[element][molecule] = count
-    return molecules, elements
+    return {'M': molecules, 'E': elements}
 
 
 def get_lcm_count(element):
@@ -50,42 +51,59 @@ def get_lcm_count(element):
     return lcm
 
 
-def apply_total(mol, elems, el, total):
-    for m, n in elems[el].items():
-        mol[m] *= total // n
-    for other_el in elems:
-        for m in elems[other_el]:
-            if m in elems[el]:
-                elems[other_el][m] *= mol[m]
-        
+def apply_total(side, elem, total):
+    print(side, elem, total)
+    #  Update molecule count
+    for m, n in side['E'][elem].items():
+        side['M'][m] *= total // n
+    #  Feedback into other elements
+    for other in side['E']:
+        for m in side['E'][other]:
+            if m in side['E'][elem]:
+                side['E'][other][m] *= side['M'][m]
+    print(side)
 
-def get_coeffs_gcd(reac, prod):
+
+def get_coeffs_gcd(coeffslist):
     result = 0
-    for coeff in reac.values():
-        if not result:
-            result = coeff
-        result = gcd(result, coeff)
+    for coeffs in coeffslist:
+        for coeff in coeffs:
+            if not result:
+                result = coeff
+            result = gcd(result, coeff)
     return result
-    
+
+
+def get_coeff_str(n, divisor):
+    coeff = n // divisor
+    if coeff > 1:
+        return str(coeff)
+    return ''
+
+
 def make_side(mol, divisor):
-    return ' + '.join([str(n // divisor) + ' ' + m for m, n in mol.items()])
+    return ' + '.join([get_coeff_str(n, divisor) + m for m, n in mol.items()])
 
 
 def balance_equation(skeleton):
-    lhs, _, rhs = skeleton.partition('->')
-    reac_mol, reac_elem = parse_side(lhs)
-    prod_mol, prod_elem = parse_side(rhs)
-    if set(reac_elem) != set(prod_elem):
+    sides = [parse_side(sidestr) for sidestr in skeleton.split('->')]
+    if set(sides[0]['E']) != set(sides[1]['E']):
         return 'Nope!'
-    for elem in set(reac_elem):
-        pre_cnt = get_lcm_count(reac_elem[elem])
-        post_cnt = get_lcm_count(prod_elem[elem])
-        total = pre_cnt * post_cnt // gcd(pre_cnt, post_cnt)
-        apply_total(reac_mol, reac_elem, elem, total)
-        apply_total(prod_mol, prod_elem, elem, total)
-    div = get_coeffs_gcd(reac_mol, prod_mol)
-    return ' <- '.join([make_side(reac_mol, div), make_side(prod_mol, div)])
+    for elem in set(sides[0]['E']):
+        elem_cnt = tuple(get_lcm_count(side['E'][elem]) for side in sides)
+        total = mul(*elem_cnt) // gcd(*elem_cnt)
+        for side in sides:
+            apply_total(side, elem, total)
+    div = get_coeffs_gcd([side['M'].values() for side in sides])
+    return ' <- '.join([make_side(side['M'], div) for side in sides])
     
 
-beq = balance_equation('Al + Fe2O4 -> Fe + Al2O3')
-print(beq)
+INPUT = '''C5H12 + O2 -> CO2 + H2O
+'''
+#Zn + HCl -> ZnCl2 + H2
+#Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O
+#FeCl3 + NH4OH -> Fe(OH)3 + NH4Cl
+#K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3'''
+
+for eq in INPUT.splitlines():
+    print(balance_equation(eq))
