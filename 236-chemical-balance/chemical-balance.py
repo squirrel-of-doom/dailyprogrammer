@@ -1,23 +1,16 @@
 from math import gcd
-from operator import mul
 import re
 
 
-def insert(compound, name, n=1):
-    if not name in compound:
-        compound[name] = 0
-    compound[name] += n
-
-
 def get_subs(sub_re, split_re, molstr, mul=1):
-    molecule = {}
+    mol = {}
     for match in re.finditer(sub_re, molstr):
         n = int(match.group(2)) if match.group(2) else 1
-        insert(molecule, match.group(1), n * mul)
+        mol[match.group(1)] = mol.setdefault(match.group(1), 0) + (n * mul)
     for s in re.split(split_re, molstr):
         if s:
-            insert(molecule, s, mul)
-    return molecule
+            mol[s] = mol.setdefault(s, 0) + mul
+    return mol
 
 
 def parse_molecule(molstr):
@@ -27,83 +20,84 @@ def parse_molecule(molstr):
     for s0, n0 in compounds.items():
         comps = get_subs('\(([\w\(\)]+)\)(\d*)', '\([\w\(\)]+\)\d*', s0, n0)
         for s1, n1 in comps.items():
-           for elem_cnt in elem_re.finditer(s1):
-               n = int(elem_cnt.group(2)) if elem_cnt.group(2) else 1
-               insert(elements, elem_cnt.group(1), n * n1)
+            for elem_cnt in elem_re.finditer(s1):
+                n = int(elem_cnt.group(2)) if elem_cnt.group(2) else 1
+                elem = elem_cnt.group(1)
+                elements[elem] = elements.setdefault(elem, 0) + (n * n1)
     return elements
 
 
-def parse_side(side):
-    molecules = {m.strip(): 1 for m in side.split('+')}
+def get_matrix(molecules, NR):
     elements = {}
-    for molecule in molecules:
-        for element, count in parse_molecule(molecule).items():
-            if not element in elements:
-                elements[element] = {}
-            elements[element][molecule] = count
-    return {'M': molecules, 'E': elements}
+    for idx, mol in enumerate(molecules):
+        for elem, cnt in parse_molecule(mol).items():
+            if elem not in elements:
+                elements[elem] = [0] * len(molecules)
+            elements[elem][idx] = cnt if idx < NR else -cnt
+    return [row for row in elements.values()]
 
 
-def get_lcm_count(element):
-    lcm = 1
-    for n in element.values():
-        lcm = lcm * n // gcd(lcm, n)
-    return lcm
+def lcm(list):
+    if not list:
+        return 1
+    idx = next(i for i, x in enumerate(list) if x)
+    n = list[idx]
+    for m in list[(idx + 1):]:
+        n *= m // gcd(n, m) if m else 1
+    return abs(n)
 
 
-def apply_total(side, elem, total):
-    print(side, elem, total)
-    #  Update molecule count
-    for m, n in side['E'][elem].items():
-        side['M'][m] *= total // n
-    #  Feedback into other elements
-    for other in side['E']:
-        for m in side['E'][other]:
-            if m in side['E'][elem]:
-                side['E'][other][m] *= side['M'][m]
-    print(side)
+def normalize(list):
+    if len(list) < 2:
+        return list
+    g = list[0]
+    for n in list[1:]:
+        g = gcd(g, n)
+    return [n // g for n in list]
 
 
-def get_coeffs_gcd(coeffslist):
-    result = 0
-    for coeffs in coeffslist:
-        for coeff in coeffs:
-            if not result:
-                result = coeff
-            result = gcd(result, coeff)
-    return result
+def gauss_elim(matrix, NCOL):
+    NROW = len(matrix)
+    for k in range(min(NROW, NCOL)):
+        cmax, imax = max((abs(matrix[i][k]), i) for i in range(k, NROW))
+        matrix[k], matrix[imax] = matrix[imax], matrix[k]
+        for below in range(k + 1, NROW):
+            coeff, pivot = matrix[below][k], matrix[k][k]
+            if not coeff:
+                continue
+            for col in range(k, NCOL):
+                matrix[below][col] = ((pivot * matrix[below][col]) -
+                                      (coeff * matrix[k][col]))
+    return [row for row in matrix if any(row)]
 
 
-def get_coeff_str(n, divisor):
-    coeff = n // divisor
-    if coeff > 1:
-        return str(coeff)
-    return ''
-
-
-def make_side(mol, divisor):
-    return ' + '.join([get_coeff_str(n, divisor) + m for m, n in mol.items()])
+def back_subst(matrix, known=None):
+    if not matrix:
+        return normalize(known)
+    tosolve = matrix[-1][next(i for i, x in enumerate(matrix[-1]) if x):]
+    if not known:
+        known = (len(tosolve) - 1) * [1]
+    t = lcm(tosolve) // lcm(tosolve[1:])
+    known = [k * t for k in known]
+    coeff = -sum([c * known[i] for i, c in enumerate(tosolve[1:])])
+    return back_subst(matrix[:-1], [coeff // tosolve[0]] + known)
 
 
 def balance_equation(skeleton):
-    sides = [parse_side(sidestr) for sidestr in skeleton.split('->')]
-    if set(sides[0]['E']) != set(sides[1]['E']):
-        return 'Nope!'
-    for elem in set(sides[0]['E']):
-        elem_cnt = tuple(get_lcm_count(side['E'][elem]) for side in sides)
-        total = mul(*elem_cnt) // gcd(*elem_cnt)
-        for side in sides:
-            apply_total(side, elem, total)
-    div = get_coeffs_gcd([side['M'].values() for side in sides])
-    return ' <- '.join([make_side(side['M'], div) for side in sides])
-    
+    sides = [side.split('+') for side in skeleton.split('->')]
+    NR = len(sides[0])
+    molecules = [molstr.strip() for side in sides for molstr in side]
+    matrix = get_matrix(molecules, NR)
+    coeffs = back_subst(gauss_elim(matrix, len(molecules)))
+    coeffstrs = [str(n) if n > 1 else '' for n in coeffs]
+    molstrs = [''.join(t) for t in zip(coeffstrs, molecules)]
+    return ' -> '.join([' + '.join(molstrs[:NR]), ' + '.join(molstrs[NR:])])
 
 INPUT = '''C5H12 + O2 -> CO2 + H2O
-'''
-#Zn + HCl -> ZnCl2 + H2
-#Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O
-#FeCl3 + NH4OH -> Fe(OH)3 + NH4Cl
-#K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3'''
+Zn + HCl -> ZnCl2 + H2
+Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O
+FeCl3 + NH4OH -> Fe(OH)3 + NH4Cl
+K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3'''
 
 for eq in INPUT.splitlines():
     print(balance_equation(eq))
