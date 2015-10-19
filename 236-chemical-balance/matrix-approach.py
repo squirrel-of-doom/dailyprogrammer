@@ -20,10 +20,10 @@ def parse_molecule(molstr):
     for s0, n0 in compounds.items():
         comps = get_subs('\(([\w\(\)]+)\)(\d*)', '\([\w\(\)]+\)\d*', s0, n0)
         for s1, n1 in comps.items():
-           for elem_cnt in elem_re.finditer(s1):
-               n = int(elem_cnt.group(2)) if elem_cnt.group(2) else 1
-               elem = elem_cnt.group(1)
-               elements[elem] = elements.setdefault(elem, 0) + (n * n1)
+            for elem_cnt in elem_re.finditer(s1):
+                n = int(elem_cnt.group(2)) if elem_cnt.group(2) else 1
+                elem = elem_cnt.group(1)
+                elements[elem] = elements.setdefault(elem, 0) + (n * n1)
     return elements
 
 
@@ -36,20 +36,6 @@ def get_matrix(molecules, NR):
             elements[elem][idx] = cnt if idx < NR else -cnt
     return [row for row in elements.values()]
 
-
-def gauss_elim(matrix, NCOL):
-    NROW = len(matrix)
-    for k in range(NROW):
-        cmax, imax = max((abs(matrix[i][k]), i) for i in range(k, NROW))
-        matrix[k], matrix[imax] = matrix[imax], matrix[k]
-        for below in range(k + 1, NROW):
-            coeff, pivot = matrix[below][k], matrix[k][k]
-            if not coeff:
-                continue
-            for col in range(k, NCOL):
-                matrix[below][col] = ((pivot * matrix[below][col]) -
-                                      (coeff * matrix[k][col]))
-    return [row for row in matrix if any(row)]
 
 def lcm(list):
     if not list:
@@ -68,6 +54,21 @@ def normalize(list):
     for n in list[1:]:
         g = gcd(g, n)
     return [n // g for n in list]
+
+
+def gauss_elim(matrix, NCOL):
+    NROW = len(matrix)
+    for k in range(min(NROW, NCOL)):
+        cmax, imax = max((abs(matrix[i][k]), i) for i in range(k, NROW))
+        matrix[k], matrix[imax] = matrix[imax], matrix[k]
+        for below in range(k + 1, NROW):
+            coeff, pivot = matrix[below][k], matrix[k][k]
+            if not coeff:
+                continue
+            for col in range(k, NCOL):
+                matrix[below][col] = ((pivot * matrix[below][col]) -
+                                      (coeff * matrix[k][col]))
+    return [row for row in matrix if any(row)]
 
 
 def back_subst(matrix, known=None):
@@ -92,13 +93,10 @@ def balance_equation(skeleton):
     molstrs = [''.join(t) for t in zip(coeffstrs, molecules)]
     return ' -> '.join([' + '.join(molstrs[:NR]), ' + '.join(molstrs[NR:])])
 
-#INPUT = '''C5H12 + O2 -> CO2 + H2O
-#Zn + HCl -> ZnCl2 + H2
-#Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O
-#FeCl3 + NH4OH -> Fe(OH)3 + NH4Cl
-#K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3'''
-
-INPUT = '''FeCl3 + NH4OH -> Fe(OH)3 + NH4Cl
+INPUT = '''C5H12 + O2 -> CO2 + H2O
+Zn + HCl -> ZnCl2 + H2
+Ca(OH)2 + H3PO4 -> Ca3(PO4)2 + H2O
+FeCl3 + NH4OH -> Fe(OH)3 + NH4Cl
 K4[Fe(SCN)6] + K2Cr2O7 + H2SO4 -> Fe2(SO4)3 + Cr2(SO4)3 + CO2 + H2O + K2SO4 + KNO3'''
 
 for eq in INPUT.splitlines():
